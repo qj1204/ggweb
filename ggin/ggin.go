@@ -3,6 +3,7 @@ package ggin
 import (
 	"log"
 	"net/http"
+	"strings"
 )
 
 // HandlerFunc 提供给用户，用来定义路由映射的处理方法
@@ -30,9 +31,21 @@ func New() *Engine {
 	return engine
 }
 
-// ServeHTTP 解析请求的路径，查找路由映射表，如果查到，就执行注册的处理方法。如果查不到，就返回 404 NOT FOUND
+// Use is defined to add middleware to the group
+func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
+	group.middlewares = append(group.middlewares, middlewares...)
+}
+
+// ServeHTTP 解析请求的路径
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var middlewares []HandlerFunc
+	for _, group := range engine.groups {
+		if strings.HasPrefix(req.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middlewares...)
+		}
+	}
 	c := newContext(w, req)
+	c.handlers = middlewares
 	engine.router.handle(c)
 }
 

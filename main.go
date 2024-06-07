@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"ggin"
-	"html/template"
 	"net/http"
 	"time"
 )
@@ -19,31 +18,14 @@ func FormatAsDate(t time.Time) string {
 }
 
 func main() {
-	r := ggin.New()
-	r.Use(ggin.Logger())
-	r.SetFuncMap(template.FuncMap{
-		"FormatAsDate": FormatAsDate,
-	})
-	r.LoadHTMLGlob("templates/*")
-	r.Static("/assets", "./static")
-
-	stu1 := &student{Name: "xiaoxin", Age: 20}
-	stu2 := &student{Name: "arong", Age: 22}
+	r := ggin.Default()
 	r.GET("/", func(c *ggin.Context) {
-		c.HTML(http.StatusOK, "css.tmpl", nil)
+		c.String(http.StatusOK, "Hello xiaoxin\n")
 	})
-	r.GET("/students", func(c *ggin.Context) {
-		c.HTML(http.StatusOK, "arr.tmpl", ggin.H{
-			"title":  "ggin",
-			"stuArr": [2]*student{stu1, stu2},
-		})
-	})
-
-	r.GET("/date", func(c *ggin.Context) {
-		c.HTML(http.StatusOK, "custom_func.tmpl", ggin.H{
-			"title": "ggin",
-			"now":   time.Date(2019, 8, 17, 0, 0, 0, 0, time.UTC),
-		})
+	// index out of range for testing Recovery()
+	r.GET("/panic", func(c *ggin.Context) {
+		names := []string{"xiaoxin"}
+		c.String(http.StatusOK, names[100])
 	})
 
 	r.Run(":9999")
